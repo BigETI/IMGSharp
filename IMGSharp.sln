@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27703.2026
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IMGSharp", "IMGSharp\IMGSharp.csproj", "{2FD9DB8C-DDA8-4EA3-BC3E-EFBB87728C80}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IMGSharp", "IMGSharp\IMGSharp.csproj", "{9E6A29A1-85B2-4FCF-B47B-B172C1CE43F0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IMGSharpUnitTest", "IMGSharpUnitTest\IMGSharpUnitTest.csproj", "{B47E756B-5490-4D78-98A6-1080CAEEABC6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,15 +13,19 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{2FD9DB8C-DDA8-4EA3-BC3E-EFBB87728C80}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2FD9DB8C-DDA8-4EA3-BC3E-EFBB87728C80}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2FD9DB8C-DDA8-4EA3-BC3E-EFBB87728C80}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2FD9DB8C-DDA8-4EA3-BC3E-EFBB87728C80}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9E6A29A1-85B2-4FCF-B47B-B172C1CE43F0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9E6A29A1-85B2-4FCF-B47B-B172C1CE43F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9E6A29A1-85B2-4FCF-B47B-B172C1CE43F0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9E6A29A1-85B2-4FCF-B47B-B172C1CE43F0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B47E756B-5490-4D78-98A6-1080CAEEABC6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B47E756B-5490-4D78-98A6-1080CAEEABC6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B47E756B-5490-4D78-98A6-1080CAEEABC6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B47E756B-5490-4D78-98A6-1080CAEEABC6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {A2D75104-6F44-454C-9102-C6C9F370D460}
+		SolutionGuid = {F2373B68-FB56-4B45-BAC3-E7AB830ECD22}
 	EndGlobalSection
 EndGlobal

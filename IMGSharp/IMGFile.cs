@@ -27,8 +27,20 @@ namespace IMGSharp
         /// Create IMG archive from directory
         /// </summary>
         /// <param name="sourceDirectoryName">Source directory name</param>
+        /// <param name="destinationArchiveFileName">Destination directory name</param>
+        /// <param name="includeBaseDirectory">Include base directory</param>
+        public static void CreateFromDirectory(string sourceDirectoryName, string destinationArchiveFileName, bool includeBaseDirectory)
+        {
+            CreateFromDirectory(sourceDirectoryName, destinationArchiveFileName, includeBaseDirectory, Encoding.UTF8);
+        }
+
+        /// <summary>
+        /// Create IMG archive from directory
+        /// </summary>
+        /// <param name="sourceDirectoryName">Source directory name</param>
         /// <param name="destinationArchiveFileName">Destination aechive file name</param>
         /// <param name="includeBaseDirectory">Include base directory into archive</param>
+        /// <param name="entryNameEncoding">Entry name encoding</param>
         public static void CreateFromDirectory(string sourceDirectoryName, string destinationArchiveFileName, bool includeBaseDirectory, Encoding entryNameEncoding)
         {
             try
@@ -136,7 +148,12 @@ namespace IMGSharp
                         {
                             using (Stream entry_stream = entry.Open())
                             {
-                                entry_stream.CopyTo(file_stream);
+                                byte[] buffer = new byte[2048];
+                                int read_bytes = 0;
+                                while ((read_bytes = entry_stream.Read(buffer, 0, buffer.Length)) > 0)
+                                {
+                                    file_stream.Write(buffer, 0, read_bytes);
+                                }
                             }
                         }
                     }
@@ -172,45 +189,83 @@ namespace IMGSharp
                         ret = new IMGArchive(File.Open(archiveFileName, (archiveMode == EIMGArchiveMode.Create) ? FileMode.Create : FileMode.Open), entryNameEncoding);
                         if (archiveMode == EIMGArchiveMode.Create)
                         {
-                            using (BinaryWriter writer = new BinaryWriter(ret.Stream, Encoding.UTF8, true))
-                            {
-                                writer.Write(Encoding.UTF8.GetBytes("VER2"));
-                                writer.Write(0);
-                                writer.Write((short)0);
-                            }
+                            byte[] header_bytes = new byte[] { 0x56, 0x45, 0x52, 0x32, 0x0, 0x0, 0x0, 0x0 };
+                            ret.Stream.Write(header_bytes, 0, header_bytes.Length);
                         }
                         else
                         {
-                            using (BinaryReader reader = new BinaryReader(ret.Stream, Encoding.UTF8, true))
+                            byte[] version_bytes = new byte[4];
+                            if (ret.Stream.Read(version_bytes, 0, version_bytes.Length) == version_bytes.Length)
                             {
-                                string version = Encoding.UTF8.GetString(reader.ReadBytes(4));
-                                uint num_entries = reader.ReadUInt32();
-                                if ((version == "VER2") && (ret.Stream.Length >= (num_entries * 8)))
+                                string version = Encoding.UTF8.GetString(version_bytes);
+                                byte[] int_bytes = new byte[4];
+                                if (ret.Stream.Read(int_bytes, 0, int_bytes.Length) == int_bytes.Length)
                                 {
-                                    for (uint num_entry = 0U; num_entry != num_entries; num_entry++)
+                                    uint num_entries = int_bytes[0] | (((uint)(int_bytes[1])) << 8) | (((uint)(int_bytes[1])) << 16) | (((uint)(int_bytes[1])) << 24);
+                                    if ((version == "VER2") && (ret.Stream.Length >= (num_entries * 8)))
                                     {
-                                        long offset = reader.ReadInt32() * 2048U;
-                                        int length = reader.ReadInt16() * 2048;
-                                        uint size_in_archive = reader.ReadUInt16();
-                                        byte[] full_name_bytes_raw = reader.ReadBytes(24);
-                                        long full_name_bytes_count = IMGUtils.GetNullTerminatedBytesLenghtFromBytes(full_name_bytes_raw);
-                                        if (full_name_bytes_count > 0L)
+                                        for (uint num_entry = 0U; num_entry != num_entries; num_entry++)
                                         {
-                                            byte[] full_name_bytes = new byte[full_name_bytes_count];
-                                            Array.Copy(full_name_bytes_raw, full_name_bytes, full_name_bytes_count);
-                                            string full_name = entryNameEncoding.GetString(full_name_bytes);
-                                            ret.entries.Add(full_name.ToLower(), new IMGArchiveEntry(ret, offset, length, full_name));
+                                            byte[] long_bytes = new byte[8];
+                                            if (ret.Stream.Read(long_bytes, 0, long_bytes.Length) == long_bytes.Length)
+                                            {
+                                                long offset = (long_bytes[0] | (((long)(long_bytes[1])) << 8) | (((long)(long_bytes[1])) << 16) | (((long)(long_bytes[1])) << 24) | (((long)(long_bytes[1])) << 32) | (((long)(long_bytes[1])) << 40) | (((long)(long_bytes[1])) << 48) | (((long)(long_bytes[1])) << 56)) * 2048L;
+                                                byte[] short_bytes = new byte[2];
+                                                if (ret.Stream.Read(short_bytes, 0, short_bytes.Length) == short_bytes.Length)
+                                                {
+                                                    int length = (short_bytes[0] | (short_bytes[1] << 8)) * 2048;
+                                                    if (ret.Stream.Read(short_bytes, 0, short_bytes.Length) == short_bytes.Length)
+                                                    {
+                                                        byte[] full_name_bytes_raw = new byte[24];
+                                                        if (ret.Stream.Read(full_name_bytes_raw, 0, full_name_bytes_raw.Length) == full_name_bytes_raw.Length)
+                                                        {
+                                                            long full_name_bytes_count = IMGUtils.GetNullTerminatedBytesLenghtFromBytes(full_name_bytes_raw);
+                                                            if (full_name_bytes_count > 0L)
+                                                            {
+                                                                byte[] full_name_bytes = new byte[full_name_bytes_count];
+                                                                Array.Copy(full_name_bytes_raw, full_name_bytes, full_name_bytes_count);
+                                                                string full_name = entryNameEncoding.GetString(full_name_bytes);
+                                                                ret.entries.Add(full_name.ToLower(), new IMGArchiveEntry(ret, offset, length, full_name));
+                                                            }
+                                                            else
+                                                            {
+                                                                throw new InvalidDataException("IMG entry name can't be empty.");
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            throw new InvalidDataException("IMG entry name can't be empty.");
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        throw new InvalidDataException("IMG entry name can't be empty.");
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    throw new InvalidDataException("IMG entry name can't be empty.");
+                                                }
+                                            }
+                                            else
+                                            {
+                                                throw new InvalidDataException("IMG entry name can't be empty.");
+                                            }
                                         }
-                                        else
-                                        {
-                                            throw new InvalidDataException("IMG entry name can't be empty.");
-                                        }
+                                    }
+                                    else
+                                    {
+                                        throw new InvalidDataException("\"" + archiveFileName + "\" is not an IMG file");
                                     }
                                 }
                                 else
                                 {
                                     throw new InvalidDataException("\"" + archiveFileName + "\" is not an IMG file");
                                 }
+                            }
+                            else
+                            {
+                                throw new InvalidDataException("\"" + archiveFileName + "\" is not an IMG file");
                             }
                         }
                     }
