@@ -21,13 +21,13 @@ namespace IMGSharpUnitTest
         [TestMethod]
         public void CreateReadIMGFiles()
         {
-            IMGFile.CreateFromDirectory("..\\..\\..\\IMGSharp", "./test1.img");
+            IMGFile.CreateFromDirectory("../../../IMGSharp", "./test1.img");
             using (IMGArchive archive = IMGFile.Open("./test1.img", EIMGArchiveMode.Read))
             {
                 Assert.IsNotNull(archive);
                 Assert.IsTrue(archive.Entries.Length > 0);
             }
-            IMGFile.CreateFromDirectory("..\\..\\..\\IMGSharp", "./test2.img", true);
+            IMGFile.CreateFromDirectory("../../../IMGSharp", "./test2.img", true);
             using (IMGArchive archive = IMGFile.Open("./test2.img", EIMGArchiveMode.Read))
             {
                 Assert.IsNotNull(archive);

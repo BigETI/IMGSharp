@@ -47,14 +47,16 @@ namespace IMGSharp
             {
                 if ((sourceDirectoryName != null) && (destinationArchiveFileName != null) && (entryNameEncoding != null))
                 {
-                    if (Directory.Exists(sourceDirectoryName))
+                    string source_directory_name = Path.GetFullPath(sourceDirectoryName);
+                    string destination_archive_file_name = Path.GetFullPath(destinationArchiveFileName);
+                    if (Directory.Exists(source_directory_name))
                     {
-                        string[] files = (includeBaseDirectory ? Directory.GetFiles(sourceDirectoryName + Path.PathSeparator + "..", sourceDirectoryName, SearchOption.AllDirectories) : Directory.GetFiles(sourceDirectoryName, "*", SearchOption.AllDirectories));
+                        string[] files = (includeBaseDirectory ? Directory.GetFiles(Path.Combine(source_directory_name, ".."), source_directory_name, SearchOption.AllDirectories) : Directory.GetFiles(source_directory_name, "*", SearchOption.AllDirectories));
                         string[] relative_files = new string[files.Length];
                         bool file_name_lenghts_ok = true;
                         for (int i = 0; i < files.Length; i++)
                         {
-                            relative_files[i] = IMGUtils.GetRelativePath(files[i], includeBaseDirectory ? (sourceDirectoryName + Path.PathSeparator + "..") : sourceDirectoryName).Replace('\\', '/');
+                            relative_files[i] = IMGUtils.GetRelativePath(files[i], includeBaseDirectory ? (Path.Combine(source_directory_name, "..")) : source_directory_name).Replace('\\', '/');
                             if (relative_files[i].Length > 24)
                             {
                                 file_name_lenghts_ok = false;
@@ -63,7 +65,7 @@ namespace IMGSharp
                         }
                         if (file_name_lenghts_ok)
                         {
-                            using (FileStream archive_stream = File.Open(destinationArchiveFileName, FileMode.Create))
+                            using (FileStream archive_stream = File.Open(destination_archive_file_name, FileMode.Create))
                             {
                                 using (BinaryWriter archive_writer = new BinaryWriter(archive_stream))
                                 {
