@@ -37,6 +37,11 @@ namespace IMGSharp
         private bool isNewEntry;
 
         /// <summary>
+        /// Data is available
+        /// </summary>
+        private bool available = true;
+
+        /// <summary>
         /// Data offset
         /// </summary>
         internal long Offset
@@ -124,15 +129,28 @@ namespace IMGSharp
         }
 
         /// <summary>
-        /// Open and read archive entry
+        /// Delete IMG archive entry
+        /// </summary>
+        public void Delete()
+        {
+            if (available)
+            {
+                available = false;
+                archive.entries.Remove(fullName.ToLower());
+                archive.CommitEntry(null, null);
+            }
+        }
+
+        /// <summary>
+        /// Open IMG archive entry
         /// </summary>
         /// <returns>Stream to archive entry if successful, otherwise "null"</returns>
-        public Stream OpenRead()
+        public Stream Open()
         {
             IMGArchiveEntryStream ret = null;
             try
             {
-                if (archive.Stream.CanRead)
+                if (available && archive.Stream.CanRead)
                 {
                     byte[] data = new byte[length];
                     archive.Stream.Seek(offset, SeekOrigin.Begin);

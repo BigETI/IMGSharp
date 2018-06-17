@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
 /// <summary>
 /// IMG sharp namespace
 /// </summary>
@@ -33,6 +30,17 @@ namespace IMGSharp
                 }
             }
             return ret;
+        }
+
+        /// <summary>
+        /// Get relative path
+        /// </summary>
+        /// <param name="path">Path</param>
+        /// <param name="relativeToPath">Relative to path</param>
+        /// <returns>Relative path of "path"</returns>
+        public static string GetRelativePath(string path, string relativeToPath)
+        {
+            return (new Uri(relativeToPath)).MakeRelativeUri(new Uri(path)).ToString();
         }
     }
 }

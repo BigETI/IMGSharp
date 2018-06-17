@@ -126,6 +126,22 @@ namespace IMGSharp
         }
 
         /// <summary>
+        /// Write IMG archive entry
+        /// </summary>
+        /// <param name="tempArchive">Temporary IMG archive</param>
+        /// <param name="newEntry">New IMG archive entry</param>
+        /// <param name="writer">Binary writer</param>
+        private void WriteEntry(IMGArchive tempArchive, IMGArchiveEntry newEntry, BinaryWriter writer)
+        {
+            using (Stream temp_stream = tempArchive.entries[newEntry.FullName.ToLower()].Open())
+            {
+                byte[] temp_data = new byte[temp_stream.Length];
+                temp_stream.Read(temp_data, 0, temp_data.Length);
+                writer.Write(temp_data);
+            }
+        }
+
+        /// <summary>
         /// Commit IMG archive entry
         /// </summary>
         /// <param name="entry">IMG archive entry</param>
@@ -152,19 +168,22 @@ namespace IMGSharp
                         this.stream.SetLength(0L);
                         using (BinaryWriter writer = new BinaryWriter(this.stream, Encoding.UTF8, true))
                         {
-                            int entry_count = entries.Values.Count + (entry.IsNewEntry ? 1 : 0);
+                            int entry_count = entries.Values.Count + ((entry == null) ? 0 : (entry.IsNewEntry ? 1 : 0));
                             int first_entry_offset = ((2048 % (entry_count * 32) == 0) ? (2048 / (entry_count * 32)) : ((2048 / (entry_count * 32)) + 1));
                             int current_entry_offset = first_entry_offset;
                             List<IMGArchiveEntry> new_entries = new List<IMGArchiveEntry>();
                             writer.Write(new byte[] { 0x56, 0x45, 0x52, 0x32, (byte)(entry_count & 0xFF), (byte)((entry_count >> 8) & 0xFF), 0x0, 0x0 });
                             Dictionary<string, IMGArchiveEntry> temp_entries = new Dictionary<string, IMGArchiveEntry>(temp_archive.entries);
-                            if (entry.IsNewEntry)
+                            if (entry != null)
                             {
-                                temp_entries.Add(entry.FullName.ToLower(), new IMGArchiveEntry(temp_archive, 0L, (int)(stream.Length), entry.FullName));
+                                if (entry.IsNewEntry)
+                                {
+                                    temp_entries.Add(entry.FullName.ToLower(), new IMGArchiveEntry(temp_archive, 0L, (int)(stream.Length), entry.FullName));
+                                }
                             }
                             foreach (KeyValuePair<string, IMGArchiveEntry> temp_entry in temp_entries)
                             {
-                                int entry_length = (int)((entry.FullName.ToLower() == temp_entry.Key) ? (((stream.Length % 2048L) == 0L) ? (stream.Length / 2048L) : ((stream.Length / 2048L) + 1)) : (((temp_entry.Value.Length % 2048L) == 0L) ? (temp_entry.Value.Length / 2048L) : ((temp_entry.Value.Length / 2048L) + 1L)));
+                                int entry_length = (int)((entry == null) ? (((temp_entry.Value.Length % 2048L) == 0L) ? (temp_entry.Value.Length / 2048L) : ((temp_entry.Value.Length / 2048L) + 1L)) : ((entry.FullName.ToLower() == temp_entry.Key) ? (((stream.Length % 2048L) == 0L) ? (stream.Length / 2048L) : ((stream.Length / 2048L) + 1)) : (((temp_entry.Value.Length % 2048L) == 0L) ? (temp_entry.Value.Length / 2048L) : ((temp_entry.Value.Length / 2048L) + 1L))));
                                 byte[] name_bytes_raw = entryNameEncoding.GetBytes(temp_entry.Value.FullName);
                                 byte[] name_bytes = new byte[24];
                                 Array.Copy(name_bytes_raw, name_bytes, Math.Min(name_bytes_raw.Length, name_bytes.Length));
@@ -182,21 +201,23 @@ namespace IMGSharp
                                 {
                                     this.stream.WriteByte(0);
                                 }
-                                if (entry.FullName == new_entry.FullName)
+                                if (entry != null)
                                 {
-                                    byte[] data = new byte[stream.Length];
-                                    stream.Seek(0L, SeekOrigin.Begin);
-                                    stream.Read(data, 0, data.Length);
-                                    writer.Write(data);
+                                    if (entry.FullName == new_entry.FullName)
+                                    {
+                                        byte[] data = new byte[stream.Length];
+                                        stream.Seek(0L, SeekOrigin.Begin);
+                                        stream.Read(data, 0, data.Length);
+                                        writer.Write(data);
+                                    }
+                                    else
+                                    {
+                                        WriteEntry(temp_archive, new_entry, writer);
+                                    }
                                 }
                                 else
                                 {
-                                    using (Stream temp_stream = temp_archive.entries[new_entry.FullName.ToLower()].OpenRead())
-                                    {
-                                        byte[] temp_data = new byte[temp_stream.Length];
-                                        temp_stream.Read(temp_data, 0, temp_data.Length);
-                                        writer.Write(temp_data);
-                                    }
+                                    WriteEntry(temp_archive, new_entry, writer);
                                 }
                             }
                         }
