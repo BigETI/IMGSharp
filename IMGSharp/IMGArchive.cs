@@ -70,10 +70,12 @@ namespace IMGSharp
         /// Constructor
         /// </summary>
         /// <param name="stream">IMG stream</param>
+        /// <param name="mode">IMG archive mode</param>
         /// <param name="entryNameEncoding">Entry name encoding</param>
-        internal IMGArchive(Stream stream, Encoding entryNameEncoding)
+        internal IMGArchive(Stream stream, EIMGArchiveMode mode, Encoding entryNameEncoding)
         {
             this.stream = stream;
+            this.mode = mode;
             this.entryNameEncoding = entryNameEncoding;
         }
 
@@ -171,8 +173,8 @@ namespace IMGSharp
                     {
                         entries.Clear();
                         this.stream.SetLength(0L);
-                        int entry_count = entries.Values.Count + ((entry == null) ? 0 : (entry.IsNewEntry ? 1 : 0));
-                        int first_entry_offset = ((2048 % (entry_count * 32) == 0) ? (2048 / (entry_count * 32)) : ((2048 / (entry_count * 32)) + 1));
+                        int entry_count = temp_archive.entries.Values.Count + ((entry == null) ? 0 : (entry.IsNewEntry ? 1 : 0));
+                        int first_entry_offset = ((((entry_count * 32) % 2048) == 0) ? ((entry_count * 32) / 2048) : (((entry_count * 32) / 2048) + 1));
                         int current_entry_offset = first_entry_offset;
                         List<IMGArchiveEntry> new_entries = new List<IMGArchiveEntry>();
                         byte[] header_bytes = new byte[] { 0x56, 0x45, 0x52, 0x32, (byte)(entry_count & 0xFF), (byte)((entry_count >> 8) & 0xFF), 0x0, 0x0 };
@@ -225,6 +227,10 @@ namespace IMGSharp
                             {
                                 WriteEntry(temp_archive, new_entry, this.stream);
                             }
+                        }
+                        while ((this.stream.Length / 2048) < current_entry_offset)
+                        {
+                            this.stream.WriteByte(0);
                         }
                     }
                     if (File.Exists(temp_path))

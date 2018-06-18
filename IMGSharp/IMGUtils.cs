@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 /// <summary>
 /// IMG sharp namespace
 /// </summary>
@@ -41,7 +42,7 @@ namespace IMGSharp
         public static string GetRelativePath(string path, string relativeToPath)
         {
             Uri path_uri = new Uri(path);
-            Uri relative_uri = new Uri(relativeToPath);
+            Uri relative_uri = new Uri(relativeToPath.EndsWith("\\") ? relativeToPath : (relativeToPath.EndsWith("/") ? relativeToPath : (relativeToPath + Path.DirectorySeparatorChar)));
             return relative_uri.MakeRelativeUri(path_uri).ToString();
         }
     }

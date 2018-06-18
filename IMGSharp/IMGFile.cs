@@ -47,16 +47,16 @@ namespace IMGSharp
             {
                 if ((sourceDirectoryName != null) && (destinationArchiveFileName != null) && (entryNameEncoding != null))
                 {
-                    string source_directory_name = Path.GetFullPath(sourceDirectoryName);
+                    string source_directory_name = Path.GetFullPath(sourceDirectoryName.TrimEnd('\\', '/'));
                     string destination_archive_file_name = Path.GetFullPath(destinationArchiveFileName);
                     if (Directory.Exists(source_directory_name))
                     {
-                        string[] files = (includeBaseDirectory ? Directory.GetFiles(Path.Combine(source_directory_name, ".."), source_directory_name, SearchOption.AllDirectories) : Directory.GetFiles(source_directory_name, "*", SearchOption.AllDirectories));
+                        string[] files = Directory.GetFiles(source_directory_name, "*", SearchOption.AllDirectories);
                         string[] relative_files = new string[files.Length];
                         bool file_name_lenghts_ok = true;
                         for (int i = 0; i < files.Length; i++)
                         {
-                            relative_files[i] = IMGUtils.GetRelativePath(files[i], includeBaseDirectory ? (Path.Combine(source_directory_name, "..")) : source_directory_name).Replace('\\', '/');
+                            relative_files[i] = IMGUtils.GetRelativePath(files[i], includeBaseDirectory ? Directory.GetParent(source_directory_name).FullName : source_directory_name).Replace('\\', '/');
                             if (relative_files[i].Length > 24)
                             {
                                 file_name_lenghts_ok = false;
@@ -69,7 +69,7 @@ namespace IMGSharp
                             {
                                 using (BinaryWriter archive_writer = new BinaryWriter(archive_stream))
                                 {
-                                    int first_entry_offset = ((2048 % (files.Length * 32) == 0) ? (2048 / (files.Length * 32)) : ((2048 / (files.Length * 32)) + 1));
+                                    int first_entry_offset = ((((files.Length * 32) % 2048) == 0) ? ((files.Length * 32) / 2048) : (((files.Length * 32) / 2048) + 1));
                                     int current_entry_offset = first_entry_offset;
                                     List<KeyValuePair<string, int>> entries = new List<KeyValuePair<string, int>>();
                                     archive_writer.Write(new byte[] { 0x56, 0x45, 0x52, 0x32, (byte)(files.Length & 0xFF), (byte)((files.Length >> 8) & 0xFF), 0x0, 0x0 });
@@ -98,6 +98,10 @@ namespace IMGSharp
                                             stream.Read(data, 0, (int)(stream.Length));
                                             archive_writer.Write(data);
                                         }
+                                    }
+                                    while ((archive_stream.Length / 2048) < current_entry_offset)
+                                    {
+                                        archive_stream.WriteByte(0);
                                     }
                                 }
                             }
@@ -188,11 +192,15 @@ namespace IMGSharp
                 {
                     if ((archiveMode == EIMGArchiveMode.Create) || File.Exists(archiveFileName))
                     {
-                        ret = new IMGArchive(File.Open(archiveFileName, (archiveMode == EIMGArchiveMode.Create) ? FileMode.Create : FileMode.Open), entryNameEncoding);
+                        ret = new IMGArchive(File.Open(archiveFileName, (archiveMode == EIMGArchiveMode.Create) ? FileMode.Create : FileMode.Open), archiveMode, entryNameEncoding);
                         if (archiveMode == EIMGArchiveMode.Create)
                         {
                             byte[] header_bytes = new byte[] { 0x56, 0x45, 0x52, 0x32, 0x0, 0x0, 0x0, 0x0 };
                             ret.Stream.Write(header_bytes, 0, header_bytes.Length);
+                            while (ret.Stream.Length < 2048)
+                            {
+                                ret.Stream.WriteByte(0);
+                            }
                         }
                         else
                         {
@@ -208,10 +216,10 @@ namespace IMGSharp
                                     {
                                         for (uint num_entry = 0U; num_entry != num_entries; num_entry++)
                                         {
-                                            byte[] long_bytes = new byte[8];
-                                            if (ret.Stream.Read(long_bytes, 0, long_bytes.Length) == long_bytes.Length)
+                                            //byte[] long_bytes = new byte[8];
+                                            if (ret.Stream.Read(int_bytes, 0, int_bytes.Length) == int_bytes.Length)
                                             {
-                                                long offset = (long_bytes[0] | (((long)(long_bytes[1])) << 8) | (((long)(long_bytes[1])) << 16) | (((long)(long_bytes[1])) << 24) | (((long)(long_bytes[1])) << 32) | (((long)(long_bytes[1])) << 40) | (((long)(long_bytes[1])) << 48) | (((long)(long_bytes[1])) << 56)) * 2048L;
+                                                long offset = (int_bytes[0] | (((long)(int_bytes[1])) << 8) | (((long)(int_bytes[1])) << 16) | (((long)(int_bytes[1])) << 24)) * 2048L;
                                                 byte[] short_bytes = new byte[2];
                                                 if (ret.Stream.Read(short_bytes, 0, short_bytes.Length) == short_bytes.Length)
                                                 {
@@ -236,22 +244,22 @@ namespace IMGSharp
                                                         }
                                                         else
                                                         {
-                                                            throw new InvalidDataException("IMG entry name can't be empty.");
+                                                            throw new InvalidDataException("IMG entry name is missing.");
                                                         }
                                                     }
                                                     else
                                                     {
-                                                        throw new InvalidDataException("IMG entry name can't be empty.");
+                                                        throw new InvalidDataException("IMG entry length is missing.");
                                                     }
                                                 }
                                                 else
                                                 {
-                                                    throw new InvalidDataException("IMG entry name can't be empty.");
+                                                    throw new InvalidDataException("IMG entry length is missing.");
                                                 }
                                             }
                                             else
                                             {
-                                                throw new InvalidDataException("IMG entry name can't be empty.");
+                                                throw new InvalidDataException("IMG entry offset is missing.");
                                             }
                                         }
                                     }

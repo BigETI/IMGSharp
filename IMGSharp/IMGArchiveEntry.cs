@@ -155,7 +155,8 @@ namespace IMGSharp
                     byte[] data = new byte[length];
                     archive.Stream.Seek(offset, SeekOrigin.Begin);
                     archive.Stream.Read(data, 0, length);
-                    ret = new IMGArchiveEntryStream(this, data);
+                    ret = new IMGArchiveEntryStream(this);
+                    ret.Write(data, 0, data.Length);
                     ret.Seek(0L, SeekOrigin.Begin);
                     ret.OnClose += (entry, stream) =>
                     {
