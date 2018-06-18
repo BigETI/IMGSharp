@@ -41,9 +41,7 @@ namespace IMGSharp
         /// <returns>Relative path of "path"</returns>
         public static string GetRelativePath(string path, string relativeToPath)
         {
-            Uri path_uri = new Uri(path);
-            Uri relative_uri = new Uri(relativeToPath.EndsWith("\\") ? relativeToPath : (relativeToPath.EndsWith("/") ? relativeToPath : (relativeToPath + Path.DirectorySeparatorChar)));
-            return relative_uri.MakeRelativeUri(path_uri).ToString();
+            return (new Uri(relativeToPath.EndsWith("\\") ? relativeToPath : (relativeToPath.EndsWith("/") ? relativeToPath : (relativeToPath + Path.DirectorySeparatorChar)))).MakeRelativeUri(new Uri(path)).ToString();
         }
     }
 }
