@@ -297,7 +297,7 @@ namespace IMGSharp
         /// Open IMG archive in read only mode
         /// </summary>
         /// <param name="archiveFileName">Archive file name</param>
-        /// <returns></returns>
+        /// <returns>IMG archive if successful, otherwise "null"</returns>
         public static IMGArchive OpenRead(string archiveFileName)
         {
             return Open(archiveFileName, EIMGArchiveMode.Read);
