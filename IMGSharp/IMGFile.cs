@@ -172,7 +172,11 @@ namespace IMGSharp
         /// </summary>
         /// <param name="archiveFileName">Archive file name</param>
         /// <param name="archiveMode">Archive mode</param>
-        /// <returns>IMG archive if successful, otherwise "null"</returns>
+        /// <returns>IMG archive</returns>
+        /// <exception cref="InvalidOperationException">Return value is null</exception>
+        /// <exception cref="ArgumentNullException">Archive file name is null</exception>
+        /// <exception cref="FileNotFoundException">Archive file not found</exception>
+        /// <exception cref="InvalidDataException">Archive error</exception>
         public static IMGArchive Open(string archiveFileName, EIMGArchiveMode archiveMode)
         {
             return Open(archiveFileName, archiveMode, Encoding.UTF8);
@@ -182,13 +186,20 @@ namespace IMGSharp
         /// Open IMG archive
         /// </summary>
         /// <param name="archiveFileName">Archive file name</param>
-        /// <returns>IMG archive if successful, otherwise "null"</returns>
+        /// <param name="archiveMode">Archive mode</param>
+        /// <param name="entryNameEncoding">Entry name encoding</param>
+        /// <returns>IMG archive</returns>
+        /// <exception cref="InvalidOperationException">Return value is null</exception>
+        /// <exception cref="ArgumentNullException">Archive file name is null</exception>
+        /// <exception cref="FileNotFoundException">Archive file not found</exception>
+        /// <exception cref="InvalidDataException">Archive error</exception>
         public static IMGArchive Open(string archiveFileName, EIMGArchiveMode archiveMode, Encoding entryNameEncoding)
         {
             IMGArchive ret = null;
-            if ((archiveFileName != null) && (entryNameEncoding != null))
+            try
             {
-                try
+                Encoding encoding = ((entryNameEncoding == null) ? Encoding.UTF8 : entryNameEncoding);
+                if (archiveFileName != null)
                 {
                     if ((archiveMode == EIMGArchiveMode.Create) || File.Exists(archiveFileName))
                     {
@@ -211,15 +222,14 @@ namespace IMGSharp
                                 byte[] int_bytes = new byte[4];
                                 if (ret.Stream.Read(int_bytes, 0, int_bytes.Length) == int_bytes.Length)
                                 {
-                                    uint num_entries = int_bytes[0] | (((uint)(int_bytes[1])) << 8) | (((uint)(int_bytes[1])) << 16) | (((uint)(int_bytes[1])) << 24);
+                                    uint num_entries = int_bytes[0] | (((uint)(int_bytes[1])) << 8) | (((uint)(int_bytes[2])) << 16) | (((uint)(int_bytes[3])) << 24);
                                     if ((version == "VER2") && (ret.Stream.Length >= (num_entries * 8)))
                                     {
                                         for (uint num_entry = 0U; num_entry != num_entries; num_entry++)
                                         {
-                                            //byte[] long_bytes = new byte[8];
                                             if (ret.Stream.Read(int_bytes, 0, int_bytes.Length) == int_bytes.Length)
                                             {
-                                                long offset = (int_bytes[0] | (((long)(int_bytes[1])) << 8) | (((long)(int_bytes[1])) << 16) | (((long)(int_bytes[1])) << 24)) * 2048L;
+                                                long offset = (int_bytes[0] | (((long)(int_bytes[1])) << 8) | (((long)(int_bytes[2])) << 16) | (((long)(int_bytes[3])) << 24)) * 2048L;
                                                 byte[] short_bytes = new byte[2];
                                                 if (ret.Stream.Read(short_bytes, 0, short_bytes.Length) == short_bytes.Length)
                                                 {
@@ -229,12 +239,10 @@ namespace IMGSharp
                                                         byte[] full_name_bytes_raw = new byte[24];
                                                         if (ret.Stream.Read(full_name_bytes_raw, 0, full_name_bytes_raw.Length) == full_name_bytes_raw.Length)
                                                         {
-                                                            long full_name_bytes_count = IMGUtils.GetNullTerminatedBytesLenghtFromBytes(full_name_bytes_raw);
-                                                            if (full_name_bytes_count > 0L)
+                                                            int full_name_bytes_count = IMGUtils.GetNullTerminatedByteStringLength(full_name_bytes_raw);
+                                                            if (full_name_bytes_count > 0)
                                                             {
-                                                                byte[] full_name_bytes = new byte[full_name_bytes_count];
-                                                                Array.Copy(full_name_bytes_raw, full_name_bytes, full_name_bytes_count);
-                                                                string full_name = entryNameEncoding.GetString(full_name_bytes);
+                                                                string full_name = encoding.GetString(full_name_bytes_raw, 0, full_name_bytes_count);
                                                                 ret.entries.Add(full_name.ToLower(), new IMGArchiveEntry(ret, offset, length, full_name));
                                                             }
                                                             else
@@ -279,16 +287,28 @@ namespace IMGSharp
                             }
                         }
                     }
-                }
-                catch (Exception e)
-                {
-                    if (ret != null)
+                    else
                     {
-                        ret.Dispose();
-                        ret = null;
+                        throw new FileNotFoundException("Archive not found", archiveFileName);
                     }
-                    Console.Error.WriteLine(e.Message);
                 }
+                else
+                {
+                    throw new ArgumentNullException("archiveFileName");
+                }
+                if (ret == null)
+                {
+                    throw new InvalidOperationException("Return value is null");
+                }
+            }
+            catch (Exception e)
+            {
+                if (ret != null)
+                {
+                    ret.Dispose();
+                    ret = null;
+                }
+                throw e;
             }
             return ret;
         }
@@ -297,8 +317,27 @@ namespace IMGSharp
         /// Open IMG archive in read only mode
         /// </summary>
         /// <param name="archiveFileName">Archive file name</param>
-        /// <returns>IMG archive if successful, otherwise "null"</returns>
+        /// <returns>IMG archive</returns>
+        /// <exception cref="InvalidOperationException">Return value is null</exception>
+        /// <exception cref="ArgumentNullException">Archive file name is null</exception>
+        /// <exception cref="FileNotFoundException">Archive file not found</exception>
+        /// <exception cref="InvalidDataException">Archive error</exception>
         public static IMGArchive OpenRead(string archiveFileName)
+        {
+            return Open(archiveFileName, EIMGArchiveMode.Read);
+        }
+
+        /// <summary>
+        /// Open IMG archive in read only mode
+        /// </summary>
+        /// <param name="archiveFileName">Archive file name</param>
+        /// <param name="entryNameEncoding">Entry name encoding</param>
+        /// <returns>IMG archive</returns>
+        /// <exception cref="InvalidOperationException">Return value is null</exception>
+        /// <exception cref="ArgumentNullException">Archive file name is null</exception>
+        /// <exception cref="FileNotFoundException">Archive file not found</exception>
+        /// <exception cref="InvalidDataException">Archive error</exception>
+        public static IMGArchive OpenRead(string archiveFileName, Encoding entryNameEncoding)
         {
             return Open(archiveFileName, EIMGArchiveMode.Read);
         }

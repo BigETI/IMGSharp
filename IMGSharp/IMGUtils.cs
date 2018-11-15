@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+
 /// <summary>
 /// IMG sharp namespace
 /// </summary>
@@ -11,17 +12,17 @@ namespace IMGSharp
     internal static class IMGUtils
     {
         /// <summary>
-        /// Get null terminated bytes length from bytes
+        /// Get null terminated byte string length
         /// </summary>
         /// <param name="bytes">Bytes</param>
-        /// <returns>Length of null terminated bytes without the null terminator</returns>
-        public static long GetNullTerminatedBytesLenghtFromBytes(byte[] bytes)
+        /// <returns>Length of null terminated byte string</returns>
+        public static int GetNullTerminatedByteStringLength(byte[] bytes)
         {
-            long ret = -1L;
+            int ret = 0;
             if (bytes != null)
             {
                 ret = bytes.Length;
-                for (long i = 0; i < bytes.LongLength; i++)
+                for (int i = 0; i < bytes.Length; i++)
                 {
                     if (bytes[i] == 0)
                     {
