@@ -53,6 +53,17 @@ namespace IMGSharp
             {
                 return (new List<IMGArchiveEntry>(entries.Values)).ToArray();
             }
+            set
+            {
+                // Not sure if it's optimal or not. Only to remove the hassle while setting the value
+                entries.Clear();
+                for (int i = 0; i < value.Length; i++)
+                {
+                    string name = value[i].Name;
+                    IMGArchiveEntry entry = value[i];
+                    entries.Add(name, entry);
+                }
+            }
         }
 
         /// <summary>
