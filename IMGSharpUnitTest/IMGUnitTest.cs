@@ -65,7 +65,7 @@ namespace IMGSharpUnitTest
                 Assert.IsNotNull(archive);
                 IMGArchiveEntry[] entries = archive.Entries;
                 int entry_count = entries.Length;
-                Assert.IsTrue(entries.Length > 0);
+                Assert.IsTrue(entry_count > 0);
                 IMGArchiveEntry entry = entries[0];
                 string entry_name = entry.FullName;
                 Console.WriteLine("Unpacking file \"" + entries[0].FullName + "\"");

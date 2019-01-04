@@ -88,7 +88,7 @@ namespace IMGSharp
                                     }
                                     foreach (KeyValuePair<string, int> entry in entries)
                                     {
-                                        using (FileStream stream = File.Open(entry.Key, FileMode.Open))
+                                        using (FileStream stream = File.Open(entry.Key, FileMode.Open, FileAccess.Read))
                                         {
                                             while ((archive_stream.Length / 2048) < entry.Value)
                                             {
@@ -111,7 +111,7 @@ namespace IMGSharp
             }
             catch (Exception e)
             {
-                Console.Error.WriteLine(e.Message);
+                Console.Error.WriteLine(e);
             }
         }
 
@@ -203,7 +203,7 @@ namespace IMGSharp
                 {
                     if ((archiveMode == EIMGArchiveMode.Create) || File.Exists(archiveFileName))
                     {
-                        ret = new IMGArchive(File.Open(archiveFileName, (archiveMode == EIMGArchiveMode.Create) ? FileMode.Create : FileMode.Open), archiveMode, entryNameEncoding);
+                        ret = new IMGArchive(File.Open(archiveFileName, (archiveMode == EIMGArchiveMode.Create) ? FileMode.Create : FileMode.Open, (archiveMode != EIMGArchiveMode.Read) ? FileAccess.ReadWrite : FileAccess.Read), archiveMode, entryNameEncoding);
                         if (archiveMode == EIMGArchiveMode.Create)
                         {
                             byte[] header_bytes = new byte[] { 0x56, 0x45, 0x52, 0x32, 0x0, 0x0, 0x0, 0x0 };

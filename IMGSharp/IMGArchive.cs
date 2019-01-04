@@ -161,12 +161,20 @@ namespace IMGSharp
                     }
                     using (FileStream temp_stream = File.Open(temp_path, FileMode.Create))
                     {
+                        byte[] buffer = new byte[4096];
                         this.stream.Seek(0L, SeekOrigin.Begin);
-                        byte[] buffer = new byte[2048];
-                        int read_bytes = 0;
-                        while ((read_bytes = this.stream.Read(buffer, 0, buffer.Length)) > 0)
+                        int len;
+                        long stream_length = this.stream.Length;
+                        while ((len = Math.Min((int)(stream_length - this.stream.Position), buffer.Length)) > 0)
                         {
-                            temp_stream.Write(buffer, 0, read_bytes);
+                            if (this.stream.Read(buffer, 0, len) == len)
+                            {
+                                temp_stream.Write(buffer, 0, len);
+                            }
+                            else
+                            {
+                                break;
+                            }
                         }
                     }
                     using (IMGArchive temp_archive = IMGFile.OpenRead(temp_path))
@@ -241,7 +249,7 @@ namespace IMGSharp
             }
             catch (Exception e)
             {
-                Console.Error.WriteLine(e.Message);
+                Console.Error.WriteLine(e);
             }
         }
 

@@ -174,7 +174,7 @@ namespace IMGSharp
                     ret.Dispose();
                     ret = null;
                 }
-                Console.Error.WriteLine(e.Message);
+                Console.Error.WriteLine(e);
             }
             return ret;
         }
