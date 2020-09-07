@@ -9,32 +9,12 @@ namespace IMGSharp
     /// <summary>
     /// IMG entry class
     /// </summary>
-    public class IMGArchiveEntry
+    internal class IMGArchiveEntry : IIMGArchiveEntry
     {
         /// <summary>
-        /// Archive
+        /// IMG archive
         /// </summary>
         private IMGArchive archive;
-
-        /// <summary>
-        /// Data offset
-        /// </summary>
-        private long offset;
-
-        /// <summary>
-        /// Length in bytes
-        /// </summary>
-        private int length;
-
-        /// <summary>
-        /// Full name
-        /// </summary>
-        private string fullName;
-
-        /// <summary>
-        /// Is new entry
-        /// </summary>
-        private bool isNewEntry;
 
         /// <summary>
         /// Data is available
@@ -42,59 +22,34 @@ namespace IMGSharp
         private bool available = true;
 
         /// <summary>
-        /// Data offset
+        /// IMG archive
         /// </summary>
-        internal long Offset
-        {
-            get
-            {
-                return offset;
-            }
-        }
+        public IIMGArchive Archive => archive;
+
+        /// <summary>
+        /// Data offset in bytes
+        /// </summary>
+        public long Offset { get; }
 
         /// <summary>
         /// Length in bytes
         /// </summary>
-        public int Length
-        {
-            get
-            {
-                return length;
-            }
-        }
+        public int Length { get; }
 
         /// <summary>
         /// Full name
         /// </summary>
-        public string FullName
-        {
-            get
-            {
-                return fullName;
-            }
-        }
+        public string FullName { get; }
 
         /// <summary>
         /// Is new entry
         /// </summary>
-        internal bool IsNewEntry
-        {
-            get
-            {
-                return isNewEntry;
-            }
-        }
+        public bool IsNewEntry { get; }
 
         /// <summary>
         /// Name
         /// </summary>
-        public string Name
-        {
-            get
-            {
-                return Path.GetFileName(fullName);
-            }
-        }
+        public string Name => Path.GetFileName(FullName);
 
         /// <summary>
         /// Constructor
@@ -106,9 +61,9 @@ namespace IMGSharp
         internal IMGArchiveEntry(IMGArchive archive, long offset, int length, string fullName)
         {
             this.archive = archive;
-            this.offset = offset;
-            this.length = length;
-            this.fullName = fullName;
+            Offset = offset;
+            Length = length;
+            FullName = fullName;
         }
 
         /// <summary>
@@ -122,10 +77,21 @@ namespace IMGSharp
         internal IMGArchiveEntry(IMGArchive archive, long offset, int length, string fullName, bool isNewEntry)
         {
             this.archive = archive;
-            this.offset = offset;
-            this.length = length;
-            this.fullName = fullName;
-            this.isNewEntry = isNewEntry;
+            Offset = offset;
+            Length = length;
+            FullName = fullName;
+            IsNewEntry = isNewEntry;
+        }
+
+        /// <summary>
+        /// Commit changes
+        /// </summary>
+        private void Commit(IIMGArchiveEntryStream stream)
+        {
+            if (archive.AccessMode != EIMGArchiveAccessMode.Read)
+            {
+                archive.CommitEntry(this, stream);
+            }
         }
 
         /// <summary>
@@ -136,8 +102,10 @@ namespace IMGSharp
             if (available)
             {
                 available = false;
-                archive.entries.Remove(fullName.ToLower());
-                archive.CommitEntry(null, null);
+                if (archive.InternalEntries.Remove(FullName.ToLower()))
+                {
+                    archive.CommitEntry(null, null);
+                }
             }
         }
 
@@ -145,26 +113,20 @@ namespace IMGSharp
         /// Open IMG archive entry
         /// </summary>
         /// <returns>Stream to archive entry if successful, otherwise "null"</returns>
-        public Stream Open()
+        public IIMGArchiveEntryStream Open()
         {
-            IMGArchiveEntryStream ret = null;
+            IIMGArchiveEntryStream ret = null;
             try
             {
                 if (available && archive.Stream.CanRead)
                 {
-                    byte[] data = new byte[length];
-                    archive.Stream.Seek(offset, SeekOrigin.Begin);
-                    archive.Stream.Read(data, 0, length);
+                    byte[] data = new byte[Length];
+                    archive.Stream.Seek(Offset, SeekOrigin.Begin);
+                    archive.Stream.Read(data, 0, Length);
                     ret = new IMGArchiveEntryStream(this);
-                    ret.Write(data, 0, data.Length);
-                    ret.Seek(0L, SeekOrigin.Begin);
-                    ret.OnClose += (entry, stream) =>
-                    {
-                        if (entry != null)
-                        {
-                            entry.Commit(stream);
-                        }
-                    };
+                    ret.Stream.Write(data, 0, data.Length);
+                    ret.Stream.Seek(0L, SeekOrigin.Begin);
+                    ret.OnCloseIMGArchiveEntry += (entry, stream) => (entry as IMGArchiveEntry)?.Commit(stream);
                 }
             }
             catch (Exception e)
@@ -177,17 +139,6 @@ namespace IMGSharp
                 Console.Error.WriteLine(e);
             }
             return ret;
-        }
-
-        /// <summary>
-        /// Commit changes
-        /// </summary>
-        private void Commit(IMGArchiveEntryStream stream)
-        {
-            if (archive.Mode != EIMGArchiveMode.Read)
-            {
-                archive.CommitEntry(this, stream);
-            }
         }
     }
 }

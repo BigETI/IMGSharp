@@ -9,7 +9,7 @@ namespace IMGSharp
     /// <summary>
     /// IMG utilities class
     /// </summary>
-    internal static class IMGUtils
+    internal static class IMGUtilities
     {
         /// <summary>
         /// Get null terminated byte string length
@@ -18,6 +18,10 @@ namespace IMGSharp
         /// <returns>Length of null terminated byte string</returns>
         public static int GetNullTerminatedByteStringLength(byte[] bytes)
         {
+            if (bytes == null)
+            {
+                throw new ArgumentNullException(nameof(bytes));
+            }
             int ret = 0;
             if (bytes != null)
             {
@@ -42,6 +46,14 @@ namespace IMGSharp
         /// <returns>Relative path of "path"</returns>
         public static string GetRelativePath(string path, string relativeToPath)
         {
+            if (path == null)
+            {
+                throw new ArgumentNullException(nameof(path));
+            }
+            if (relativeToPath == null)
+            {
+                throw new ArgumentNullException(nameof(relativeToPath));
+            }
             return (new Uri(relativeToPath.EndsWith("\\") ? relativeToPath : (relativeToPath.EndsWith("/") ? relativeToPath : (relativeToPath + Path.DirectorySeparatorChar)))).MakeRelativeUri(new Uri(path)).ToString();
         }
     }

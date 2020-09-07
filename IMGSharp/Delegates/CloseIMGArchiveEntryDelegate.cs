@@ -8,5 +8,5 @@ namespace IMGSharp
     /// </summary>
     /// <param name="entry">IMG archive entry</param>
     /// <param name="stream">IMG archive entry stream</param>
-    internal delegate void OnCloseIMGArchiveEntryEventHandler(IMGArchiveEntry entry, IMGArchiveEntryStream stream);
+    public delegate void CloseIMGArchiveEntryDelegate(IIMGArchiveEntry entry, IIMGArchiveEntryStream stream);
 }

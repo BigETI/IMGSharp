@@ -4,9 +4,9 @@
 namespace IMGSharp
 {
     /// <summary>
-    /// IMG archive mode enumerator
+    /// IMG archive access mode enumerator
     /// </summary>
-    public enum EIMGArchiveMode
+    public enum EIMGArchiveAccessMode
     {
         /// <summary>
         /// Read
