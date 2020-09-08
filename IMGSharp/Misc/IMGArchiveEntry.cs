@@ -126,7 +126,7 @@ namespace IMGSharp
                     ret = new IMGArchiveEntryStream(this);
                     ret.Stream.Write(data, 0, data.Length);
                     ret.Stream.Seek(0L, SeekOrigin.Begin);
-                    ret.OnCloseIMGArchiveEntry += (entry, stream) => (entry as IMGArchiveEntry)?.Commit(stream);
+                    ret.OnIMGArchiveEntryClosed += (entry, stream) => (entry as IMGArchiveEntry)?.Commit(stream);
                 }
             }
             catch (Exception e)

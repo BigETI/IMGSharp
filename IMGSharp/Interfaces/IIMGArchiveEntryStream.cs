@@ -22,8 +22,8 @@ namespace IMGSharp
         IIMGArchiveEntry IMGArchiveEntry { get; }
 
         /// <summary>
-        /// On close IMG archive entry event
+        /// On IMG archive entry closed
         /// </summary>
-        event CloseIMGArchiveEntryDelegate OnCloseIMGArchiveEntry;
+        event IMGArchiveEntryClosedDelegate OnIMGArchiveEntryClosed;
     }
 }

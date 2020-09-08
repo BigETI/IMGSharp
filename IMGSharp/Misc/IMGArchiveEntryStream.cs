@@ -21,9 +21,9 @@ namespace IMGSharp
         public IIMGArchiveEntry IMGArchiveEntry { get; }
 
         /// <summary>
-        /// On close IMG archive entry event
+        /// On IMG archive entry closed
         /// </summary>
-        public event CloseIMGArchiveEntryDelegate OnCloseIMGArchiveEntry;
+        public event IMGArchiveEntryClosedDelegate OnIMGArchiveEntryClosed;
 
         /// <summary>
         /// Constructor
@@ -40,7 +40,7 @@ namespace IMGSharp
         /// </summary>
         public void Dispose()
         {
-            OnCloseIMGArchiveEntry?.Invoke(IMGArchiveEntry, this);
+            OnIMGArchiveEntryClosed?.Invoke(IMGArchiveEntry, this);
             Stream?.Dispose();
         }
     }
